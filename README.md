@@ -1,8 +1,14 @@
-# Meth Run - Developed by KevinGirardx & Project Sloth
+# Modified Versoin of [ps-methrun](https://github.com/trclassic92/ps-methrun)
 
-# Preview 
-
-https://streamable.com/fwd9r8
+# Additions by me
+* Need an item to start
+* Moved location in city
+* Changed peds to Vagos and Ballas
+* Changed props
+* Added cars
+* Added a different ped to end the mission
+* Changed ped logic
+* Added ps-dispatch alert
 
 # Add to qb-core
 Items to add to qb-core>shared>items.lua
