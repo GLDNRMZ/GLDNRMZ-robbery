@@ -59,49 +59,6 @@ function StartJobPed()
     end
 end
 
---[[CreateThread(function()
-    local npc = exports['rep-talkNPC']:CreateNPC({
-        npc = 'a_m_y_mexthug_01',
-        coords = vector3(-947.07, 329.255, 70.339),
-        heading = 271.414,
-        name = 'Hector',
-        animName = "amb@world_human_leaning@female@wall@back@holding_elbow@idle_a",
-        animDist = "idle_a",
-        startMSG = 'Pssst!!'
-    }, {
-        {label = "Hey...", value = 1},
-        {label = "Maybe.. what kind of job?", value = 2},
-        {label = "I'M IN!", value = 3},
-        {label = "I'm good, thanks.", value = 4},
-    }, function(ped, data, menu)
-        Boss = ped -- To delete the ped when the source stops
-        if data then
-            if data.value == 1 then
-                Wait(1000)
-                menu.addMessage({msg = "What's up?", from = "npc"})
-                Wait(1000)
-                menu.addMessage({msg = "Wanna do a job for me?", from = "npc"})
-            elseif data.value == 2 then
-                Wait(1000)
-                menu.addMessage({msg = "Don't worry about it.", from = "npc"})
-                Wait(1000)
-                menu.addMessage({msg = "You in or out?", from = "npc"})
-            elseif data.value == 3 then
-                Wait(1000)
-                menu.addMessage({msg = "Good. I'll send you the details", from = "npc"})
-                Wait(1000)
-                TriggerEvent('lb-robbery:client:start')
-                menu.close()
-            elseif data.value == 4 then
-                Wait(1000)
-                menu.addMessage({msg = "Bounce then homie!!", from = "npc"})
-                Wait(1000)
-                menu.close()
-            end
-        end
-    end)
-end)--]]
-
 -------------
 --Finish PED--
 -------------
@@ -150,7 +107,6 @@ function FinishJobPed()
         end
     end
 end
-
 
 -------------
 --START JOB--
@@ -354,7 +310,7 @@ RegisterNetEvent('lb-robbery:client:items', function()
     QBCore.Functions.TriggerCallback('QBCore:HasItem', function(result)
         if result then
             PoliceAlert()
-            exports["memorygame"]:thermiteminigame(1, 3, 2, 20,
+            exports["memorygame"]:thermiteminigame(8, 3, 2, 20,
             function() -- Success
                 TriggerEvent('animations:client:EmoteCommandStart', {"parkingmeter"})
                 QBCore.Functions.Progressbar("grab_case", Lang:t('info.unlocking_case'), 5000, false, true, {
@@ -363,7 +319,7 @@ RegisterNetEvent('lb-robbery:client:items', function()
                     disableMouse = false,
                     disableCombat = true,
                 }, {
-                }, {}, {}, function() -- Done
+                }, {}, {}, function()
                     TriggerEvent('animations:client:EmoteCommandStart', {"c"})
                     RemoveBlip(case)
                     TriggerServerEvent('lb-robbery:server:unlock')
