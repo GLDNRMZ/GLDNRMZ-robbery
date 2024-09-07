@@ -24,7 +24,6 @@ AddEventHandler('QBCore:Client:OnJobUpdate', function(JobInfo)
 end)
 
 function loadAnimDict(dict) while (not HasAnimDictLoaded(dict)) do RequestAnimDict(dict) Wait(0) end end
-
 -------------
 --START PED--
 -------------
@@ -48,7 +47,7 @@ function StartJobPed()
             options = {
                 { 
                     type = "client",
-                    event = "lb-robbery:client:start",
+                    event = "GLDNRMZ-robbery:client:start",
                     icon = "fas fa-circle",
                     label = "Get Job",
                     item = Config.NeedItem,
@@ -58,7 +57,6 @@ function StartJobPed()
         })
     end
 end
-
 -------------
 --Finish PED--
 -------------
@@ -88,10 +86,10 @@ function FinishJobPed()
                 options = {
                     {
                         type = "client",
-                        event = "lb-robbery:client:reward",
+                        event = "GLDNRMZ-robbery:client:reward",
                         icon = "fas fa-circle",
                         label = "Check Product",
-                        item = 'meth_cured',
+                        item = 'securitycase',
                     },
                 },
                 distance = 1.5,
@@ -107,27 +105,26 @@ function FinishJobPed()
         end
     end
 end
-
 -------------
 --START JOB--
 -------------
-RegisterNetEvent('lb-robbery:client:start', function ()
+RegisterNetEvent('GLDNRMZ-robbery:client:start', function ()
     if CurrentCops >= Config.MinimumMethJobPolice then
-        QBCore.Functions.TriggerCallback("lb-robbery:server:coolc",function(isCooldown)
+        QBCore.Functions.TriggerCallback("GLDNRMZ-robbery:server:coolc",function(isCooldown)
             if not isCooldown then
-                TriggerEvent('animations:client:EmoteCommandStart', {"idle11"})
                 QBCore.Functions.Progressbar("start_job", Lang:t('info.talking_to_boss'), 5000, false, true, {
                     disableMovement = true,
                     disableCarMovement = true,
                     disableMouse = false,
                     disableCombat = true,
                 }, {
+                    animDict = "anim@amb@casino@brawl@fights@argue@",
+                    anim = "arguement_loop_mp_m_brawler_01",
+                    flag = 16,
                 }, {}, {}, function()
-                    TriggerEvent('animations:client:EmoteCommandStart', {"c"})
-                    TriggerServerEvent('lb-robbery:server:startr')
-                    TriggerServerEvent('lb-robbery:server:coolout')
+                    TriggerServerEvent('GLDNRMZ-robbery:server:startr')
+                    TriggerServerEvent('GLDNRMZ-robbery:server:coolout')
                 end, function()
-                    TriggerEvent('animations:client:EmoteCommandStart', {"c"})
                     QBCore.Functions.Notify(Lang:t("error.canceled"), 'error')
                 end)
             else
@@ -138,7 +135,6 @@ RegisterNetEvent('lb-robbery:client:start', function ()
         QBCore.Functions.Notify(Lang:t("error.cannot_do_this_right_now"), 'error')
     end
 end)
-
 ----------
 --EMAILS--
 ----------
@@ -161,14 +157,11 @@ function Itemtimemsg()
 	message = Lang:t('mail.message'),
 	})
     Citizen.Wait(Config.Itemtime)
-    TriggerServerEvent('lb-robbery:server:givecaseitems')
-    QBCore.Functions.Notify(Lang:t("success.case_has_been_unlocked"), 'success')
 end
-
 -------------
 --CAR SPAWN--
 -------------
-RegisterNetEvent('lb-robbery:server:runactivate', function()
+RegisterNetEvent('GLDNRMZ-robbery:server:runactivate', function()
     RunStart()
 
     local VehicleCoords1 = Config.Carspawn1
@@ -180,6 +173,7 @@ RegisterNetEvent('lb-robbery:server:runactivate', function()
     ClearAreaOfVehicles(VehicleCoords1.x, VehicleCoords1.y, VehicleCoords1.z, 15.0, false, false, false, false, false)
     local transport1 = CreateVehicle(`tornado`, VehicleCoords1.x, VehicleCoords1.y, VehicleCoords1.z, 293.46, true, true)
     SetVehicleCustomPrimaryColour(transport1, 255, 255, 0)
+    SetVehicleInteriorColour(transport1, 12)
     SpawnGuards()
     spawncase()
     spawnwood()
@@ -192,8 +186,8 @@ RegisterNetEvent('lb-robbery:server:runactivate', function()
     ClearAreaOfVehicles(VehicleCoords2.x, VehicleCoords2.y, VehicleCoords2.z, 15.0, false, false, false, false, false)
     local transport2 = CreateVehicle(`voodoo`, VehicleCoords2.x, VehicleCoords2.y, VehicleCoords2.z, 33.298, true, true)
     SetVehicleCustomPrimaryColour(transport2, 128, 0, 128)
+    SetVehicleInteriorColour(transport2, 12)
 end)
-
 ---------------
 --PROPS SPAWN--
 ---------------
@@ -217,7 +211,7 @@ CreateThread(function()
         options = {
             {
                 type = 'client',
-                event = "lb-robbery:client:items",
+                event = "GLDNRMZ-robbery:client:items",
                 icon = "fas fa-circle",
                 label = "Grab Goods",
                 item = 'casekey',            
@@ -233,7 +227,6 @@ function spawnwood()
     SetEntityHeading(wood, 270.12)
     FreezeEntityPosition(wood, true)
 end
-
 ----------------
 --Guards Spawn--
 ----------------
@@ -302,101 +295,94 @@ function PoliceAlert()
         length = 3,
     })
 end
-
 -------------
 --OPEN CASE--
 -------------
-RegisterNetEvent('lb-robbery:client:items', function()
-    QBCore.Functions.TriggerCallback('QBCore:HasItem', function(result)
-        if result then
-            PoliceAlert()
-            exports["memorygame"]:thermiteminigame(8, 3, 2, 20,
-            function() -- Success
-                TriggerEvent('animations:client:EmoteCommandStart', {"parkingmeter"})
+RegisterNetEvent('GLDNRMZ-robbery:client:items', function()
+    if QBCore.Functions.HasItem('casekey') then
+        PoliceAlert()
+        exports['ps-ui']:Circle(function(success)
+            if success then
                 QBCore.Functions.Progressbar("grab_case", Lang:t('info.unlocking_case'), 5000, false, true, {
                     disableMovement = true,
                     disableCarMovement = true,
                     disableMouse = false,
                     disableCombat = true,
                 }, {
-                }, {}, {}, function()
-                    TriggerEvent('animations:client:EmoteCommandStart', {"c"})
+                    animDict = "anim@heists@money_grab@briefcase",
+                    anim = "loop",
+                    flag = 16,
+                }, {}, {}, function() -- Done
                     RemoveBlip(case)
-                    TriggerServerEvent('lb-robbery:server:unlock')
+                    TriggerServerEvent('GLDNRMZ-robbery:server:unlock')
 
                     local playerPedPos = GetEntityCoords(PlayerPedId(), true)
                     local case = GetClosestObjectOfType(playerPedPos, 10.0, `hei_prop_hei_drug_case`, false, false, false)
-                    if (IsPedActiveInScenario(PlayerPedId()) == false) then
-                    SetEntityAsMissionEntity(case, 1, 1)
-                    DeleteEntity(case)
-                    QBCore.Functions.Notify(Lang:t("success.you_removed_first_security_case"), 'success')
-                    FinishJobPed()
-                    SetNewWaypoint(Config.FinishCoords.x, Config.FinishCoords.y)
-                    Itemtimemsg() 
-                end
+                    if not IsPedActiveInScenario(PlayerPedId()) then
+                        SetEntityAsMissionEntity(case, true, true)
+                        DeleteEntity(case)
+                        QBCore.Functions.Notify(Lang:t("success.you_removed_first_security_case"), 'success')
+                        FinishJobPed()
+                        SetNewWaypoint(Config.FinishCoords.x, Config.FinishCoords.y)
+                        Itemtimemsg()
+                    end
                 end, function()
-                    TriggerEvent('animations:client:EmoteCommandStart', {"c"})
                     QBCore.Functions.Notify(Lang:t("error.canceled"), 'error')
                 end)
-            end,
-            function()
+            else
                 QBCore.Functions.Notify(Lang:t("error.you_failed"), 'error')
-            end)
-        else
-            QBCore.Functions.Notify(Lang:t("error.you_cannot_do_this"), 'error')
-        end
-
-    end, "casekey")
+            end
+        end, 3, 10)
+    else
+        QBCore.Functions.Notify(Lang:t("error.you_cannot_do_this"), 'error')
+    end
 end)
-
 ----------
 --PAYOUT--
 ----------
-RegisterNetEvent('lb-robbery:client:reward', function()
-    QBCore.Functions.TriggerCallback('QBCore:HasItem', function(result)
-        if result then
-            TriggerEvent('animations:client:EmoteCommandStart', {"suitcase"})
-            QBCore.Functions.Progressbar("product_check", Lang:t('info.checking_quality'), 5000, false, true, {
-                disableMovement = true,
-                disableCarMovement = true,
-                disableMouse = false,
-                disableCombat = true,
-            }, {
-            }, {}, {}, function()
-                TriggerEvent('animations:client:EmoteCommandStart', {"c"})
-                ClearPedTasks(PlayerPedId())
-                TriggerServerEvent('lb-robbery:server:rewardpayout')
+RegisterNetEvent('GLDNRMZ-robbery:client:reward', function()
+    if QBCore.Functions.HasItem('securitycase') then
+        TriggerEvent('animations:client:EmoteCommandStart', {"suitcase"})
+        QBCore.Functions.Progressbar("product_check", Lang:t('info.checking_quality'), 5000, false, true, {
+            disableMovement = true,
+            disableCarMovement = true,
+            disableMouse = false,
+            disableCombat = true,
+        }, {}, {}, {}, function()
+            TriggerEvent('animations:client:EmoteCommandStart', {"c"})
+            ClearPedTasks(PlayerPedId())
+            TriggerServerEvent('GLDNRMZ-robbery:server:rewardpayout')
+            QBCore.Functions.Notify(Lang:t("success.you_got_paid"), 'success')
 
-                QBCore.Functions.Notify(Lang:t("success.you_got_paid"), 'success')
+            Citizen.CreateThread(function()
+                if DoesBlipExist(finishbossBlip) then
+                    RemoveBlip(finishbossBlip)
+                end
 
-                Citizen.CreateThread(function()
-                    RemoveBlip(finishboss)
-                    TaskGoToCoordAnyMeans(finishboss, -2280.708, 322.311, 174.602, 1.0, 0, 0, 786603, 0xbf800000)
-                                    
-                    local propHash = GetHashKey("prop_ld_suitcase_01")
-                    RequestModel(propHash)
-                    while not HasModelLoaded(propHash) do
-                        Citizen.Wait(0)
-                    end
-                
-                    local prop = CreateObject(propHash, 0.0, 0.0, 0.0, true, true, false)
-                    local boneIndex = GetPedBoneIndex(finishboss, 60309)
-                
-                    AttachEntityToEntity(prop, finishboss, boneIndex, 0.3323, 0.0079, 0.0, -5.6272, -82.2274, 135.2101, true, true, false, true, 1, true)
-                
-                    Citizen.Wait(60000)
-                    DeleteEntity(prop)
-                    DeleteEntity(finishboss)
-                    finishbossSpawned = false
-                end)
-                
-                
-            end, function()
-                TriggerEvent('animations:client:EmoteCommandStart', {"c"})
-                QBCore.Functions.Notify(Lang:t("error.canceled"), 'error')
+                TaskGoToCoordAnyMeans(finishboss, -2280.708, 322.311, 174.602, 1.0, 0, 0, 786603, 0xbf800000)
+
+                local propHash = GetHashKey("prop_ld_suitcase_01")
+                RequestModel(propHash)
+                while not HasModelLoaded(propHash) do
+                    Citizen.Wait(0)
+                end
+
+                local prop = CreateObject(propHash, 0.0, 0.0, 0.0, true, true, false)
+                local boneIndex = GetPedBoneIndex(finishboss, 60309)
+
+                AttachEntityToEntity(prop, finishboss, boneIndex, 0.3323, 0.0079, 0.0, -5.6272, -82.2274, 135.2101, true, true, false, true, 1, true)
+
+                Citizen.Wait(60000)
+                DeleteEntity(prop)
+                DeleteEntity(finishboss)
+                finishbossSpawned = false
             end)
-        else
-            QBCore.Functions.Notify(Lang:t("error.you_cannot_do_this"), 'error')
-        end
-    end, "meth_cured", 20)
+
+        end, function()
+            TriggerEvent('animations:client:EmoteCommandStart', {"c"})
+            QBCore.Functions.Notify(Lang:t("error.canceled"), 'error')
+        end)
+    else
+        QBCore.Functions.Notify(Lang:t("error.you_cannot_do_this"), 'error')
+    end
 end)
