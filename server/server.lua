@@ -1,8 +1,7 @@
 local QBCore = exports['qb-core']:GetCoreObject() 
-
 local Cooldown = false
 
-RegisterServerEvent('lb-robbery:server:startr', function()
+RegisterServerEvent('GLDNRMZ-robbery:server:startr', function()
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
 
@@ -10,26 +9,33 @@ RegisterServerEvent('lb-robbery:server:startr', function()
         if Player.PlayerData.money['cash'] >= Config.RunCost then
             Player.Functions.RemoveMoney('cash', Config.RunCost)
             Player.Functions.AddItem("casekey", 1)
-            Player.Functions.RemoveItem(Config.NeedItem, 1)
-            TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["casekey"], "add")
-            TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[Config.NeedItem], "remove")
-            TriggerClientEvent("lb-robbery:server:runactivate", src)
+            
+            if Config.RemoveItem then
+                Player.Functions.RemoveItem(Config.NeedItem, 1)
+                TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[Config.NeedItem], "remove")
+            end
+
+            TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items["casekey"], "add")
+            TriggerClientEvent("GLDNRMZ-robbery:server:runactivate", src)
             TriggerClientEvent('QBCore:Notify', src, Lang:t("success.send_email_right_now"), 'success')
         else
             TriggerClientEvent('QBCore:Notify', src, Lang:t("error.you_dont_have_enough_money"), 'error')
         end
     else
         Player.Functions.AddItem("casekey", 1)
-        Player.Functions.RemoveItem(Config.NeedItem, 1)
-        TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["casekey"], "add")
-        TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[Config.NeedItem], "remove")
-        TriggerClientEvent("lb-robbery:server:runactivate", src)
+        
+        if Config.RemoveItem then
+            Player.Functions.RemoveItem(Config.NeedItem, 1)
+            TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[Config.NeedItem], "remove")
+        end
+
+        TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items["casekey"], "add")
+        TriggerClientEvent("GLDNRMZ-robbery:server:runactivate", src)
         TriggerClientEvent('QBCore:Notify', src, Lang:t("success.send_email_right_now"), 'success')
     end
 end)
 
--- cool down for job
-RegisterServerEvent('lb-robbery:server:coolout', function()
+RegisterServerEvent('GLDNRMZ-robbery:server:coolout', function()
     Cooldown = true
     local timer = Config.Cooldown * 60000
     while timer > 0 do
@@ -41,7 +47,7 @@ RegisterServerEvent('lb-robbery:server:coolout', function()
     end
 end)
 
-QBCore.Functions.CreateCallback("lb-robbery:server:coolc",function(source, cb)
+QBCore.Functions.CreateCallback("GLDNRMZ-robbery:server:coolc", function(source, cb)
     if Cooldown then
         cb(true)
     else
@@ -49,45 +55,34 @@ QBCore.Functions.CreateCallback("lb-robbery:server:coolc",function(source, cb)
     end
 end)
 
-RegisterServerEvent('lb-robbery:server:unlock', function ()
+RegisterServerEvent('GLDNRMZ-robbery:server:unlock', function ()
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
 
     Player.Functions.AddItem("securitycase", 1)
     Player.Functions.RemoveItem("casekey", 1)
-    TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["securitycase"], "add")
-    TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["casekey"], "remove")
+    TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items["securitycase"], "add")
+    TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items["casekey"], "remove")
 end)
 
-RegisterServerEvent('lb-robbery:server:rewardpayout', function ()
+RegisterServerEvent('GLDNRMZ-robbery:server:rewardpayout', function ()
     local src = source
-	local Player = QBCore.Functions.GetPlayer(src)
+    local Player = QBCore.Functions.GetPlayer(src)
 
-    Player.Functions.RemoveItem("meth_cured", 20)
-    TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["meth_cured"], "remove")
+    Player.Functions.RemoveItem("securitycase", 1)
+    TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items["securitycase"], "remove")
     
-
     Player.Functions.AddMoney('cash', Config.Payout)
 
-    local chance = math.random(1, 100)
-
-    if chance >= 85 then
-        Player.Functions.AddItem(Config.Item, Config.MethAmount)
-        TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[Config.Item], "add")
+    local methChance = math.random(1, 100)
+    if methChance <= Config.ItemChance then
+        Player.Functions.AddItem(Config.Item, Config.ItemAmount)
+        TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[Config.Item], "add")
     end
 
-    if chance >= 95 then
-        Player.Functions.AddItem(Config.SpecialItem, 1)
-        TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[Config.SpecialItem], "add")
+    local specialChance = math.random(1, 100)
+    if specialChance <= Config.SpecialItemChance then
+        Player.Functions.AddItem(Config.SpecialItem, Config.SpecialItemAmount)
+        TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[Config.SpecialItem], "add")
     end
-end)
-
-RegisterServerEvent('lb-robbery:server:givecaseitems', function ()
-    local src = source
-	local Player = QBCore.Functions.GetPlayer(src)
-
-	Player.Functions.AddItem("meth_cured", 20)
-    Player.Functions.RemoveItem("securitycase", 1)
-	TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["meth_cured"], "add")
-    TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["securitycase"], "remove")
 end)
