@@ -161,6 +161,8 @@ end
 -------------
 --CAR SPAWN--
 -------------
+local spawnedCars = {}
+
 RegisterNetEvent('GLDNRMZ-robbery:server:runactivate', function()
     RunStart()
 
@@ -169,14 +171,11 @@ RegisterNetEvent('GLDNRMZ-robbery:server:runactivate', function()
     while not HasModelLoaded(`tornado`) do
         Citizen.Wait(0)
     end
-    SetNewWaypoint(VehicleCoords1.x, VehicleCoords1.y)
     ClearAreaOfVehicles(VehicleCoords1.x, VehicleCoords1.y, VehicleCoords1.z, 15.0, false, false, false, false, false)
     local transport1 = CreateVehicle(`tornado`, VehicleCoords1.x, VehicleCoords1.y, VehicleCoords1.z, 293.46, true, true)
     SetVehicleCustomPrimaryColour(transport1, 255, 255, 0)
     SetVehicleInteriorColour(transport1, 12)
-    SpawnGuards()
-    spawncase()
-    spawnwood()
+    table.insert(spawnedCars, transport1) -- Store the first car in a table
 
     local VehicleCoords2 = Config.Carspawn2
     RequestModel(`voodoo`)
@@ -187,7 +186,13 @@ RegisterNetEvent('GLDNRMZ-robbery:server:runactivate', function()
     local transport2 = CreateVehicle(`voodoo`, VehicleCoords2.x, VehicleCoords2.y, VehicleCoords2.z, 33.298, true, true)
     SetVehicleCustomPrimaryColour(transport2, 128, 0, 128)
     SetVehicleInteriorColour(transport2, 12)
+    table.insert(spawnedCars, transport2) -- Store the second car in a table
+
+    SpawnGuards()
+    spawncase()
+    spawnwood()
 end)
+
 ---------------
 --PROPS SPAWN--
 ---------------
@@ -221,12 +226,17 @@ CreateThread(function()
     })
 end)
 
+local spawnedWood = nil
+
 function spawnwood()
-    local wood = CreateObject(`prop_woodpile_01b`, 99.55, -2196.97, 5.18, true,  true, true)
-    CreateObject(wood)
-    SetEntityHeading(wood, 270.12)
-    FreezeEntityPosition(wood, true)
+    if spawnedWood then
+        DeleteEntity(spawnedWood)
+    end
+    spawnedWood = CreateObject(`prop_woodpile_01b`, 99.55, -2196.97, 5.18, true, true, true)
+    SetEntityHeading(spawnedWood, 270.12)
+    FreezeEntityPosition(spawnedWood, true)
 end
+
 ----------------
 --Guards Spawn--
 ----------------
@@ -246,54 +256,38 @@ function loadModel(model)
     end
 end
 
+local guardPeds = {}
+
 function SpawnGuards()
-    local ped = PlayerPedId()
-
-    SetPedRelationshipGroupHash(ped, `PLAYER`)
-    AddRelationshipGroup('npcguards')
-
-    for k, v in pairs(Config['methguards']['npcguards']) do
-        loadModel(v['model'])
-        methguards['npcguards'][k] = CreatePed(26, GetHashKey(v['model']), v['coords'], v['heading'], true, true)
-        NetworkRegisterEntityAsNetworked(methguards['npcguards'][k])
-        networkID = NetworkGetNetworkIdFromEntity(methguards['npcguards'][k])
-        SetNetworkIdCanMigrate(networkID, true)
-        SetNetworkIdExistsOnAllMachines(networkID, true)
-        SetPedRandomComponentVariation(methguards['npcguards'][k], 0)
-        SetPedRandomProps(methguards['npcguards'][k])
-        SetEntityAsMissionEntity(methguards['npcguards'][k])
-        SetEntityVisible(methguards['npcguards'][k], true)
-        SetPedRelationshipGroupHash(methguards['npcguards'][k], `npcguards`)
-        SetPedAccuracy(methguards['npcguards'][k], 75)
-        SetPedArmour(methguards['npcguards'][k], 100)
-        SetPedCanSwitchWeapon(methguards['npcguards'][k], true)
-        SetPedDropsWeaponsWhenDead(methguards['npcguards'][k], false)
-        SetPedFleeAttributes(methguards['npcguards'][k], 0, false)
-        GiveWeaponToPed(methguards['npcguards'][k], `WEAPON_PISTOL`, 255, false, false)
-        local random = math.random(1, 2)
-        if random == 2 then
-            TaskGuardCurrentPosition(methguards['npcguards'][k], 2.0, 2.0, -1)
+    for _, guard in ipairs(Config.GuardPeds) do
+        local model = GetHashKey(guard.model)
+        RequestModel(model)
+        while not HasModelLoaded(model) do
+            Wait(1)
         end
-    end
 
-    SetRelationshipBetweenGroups(0, `npcguards`, `npcguards`)
-    SetRelationshipBetweenGroups(5, `npcguards`, `PLAYER`)
-    SetRelationshipBetweenGroups(5, `PLAYER`, `npcguards`)
+        local guardPed = CreatePed(4, model, guard.coords.x, guard.coords.y, guard.coords.z, guard.heading, true, true)
+        GiveWeaponToPed(guardPed, GetHashKey("weapon_pistol_mk2"), 250, false, true)
+        SetPedCombatAttributes(guardPed, 46, true)  -- Disables blocking
+        SetPedCombatAttributes(guardPed, 5, false) -- Disables melee combat
+        SetPedCombatAttributes(guardPed, 1, false) -- Disables can use cover
+        SetPedCombatAbility(guardPed, 0)           -- Lower combat ability
+        SetPedCombatRange(guardPed, 0)             -- Lower combat range
+        SetPedCombatMovement(guardPed, 1)          -- Lower combat movement
+
+        SetPedFleeAttributes(guardPed, 0, false)   -- Disables fleeing
+
+        SetPedRelationshipGroupHash(guardPed, GetHashKey("HATES_PLAYER")) 
+        TaskCombatPed(guardPed, PlayerPedId(), 0, 16)
+
+        table.insert(guardPeds, guardPed) -- Store each guard in a table
+    end
 end
+
 
 function PoliceAlert()
     if math.random(1,100) >= Config.AlertChance then return end
-    exports["ps-dispatch"]:CustomAlert({
-        coords = GetEntityCoords(PlayerPedId()),
-        message = Lang:t('police.message'),
-        dispatchCode = Lang:t('police.code'),
-        description = Lang:t('police.bliptitle'),
-        radius = 0,
-        sprite = 437,
-        color = 5,
-        scale = 0.75,
-        length = 3,
-    })
+    exports["ps-dispatch"]:GangActivity()
 end
 -------------
 --OPEN CASE--
@@ -358,25 +352,46 @@ RegisterNetEvent('GLDNRMZ-robbery:client:reward', function()
                 if DoesBlipExist(finishbossBlip) then
                     RemoveBlip(finishbossBlip)
                 end
-
+            
                 TaskGoToCoordAnyMeans(finishboss, -2280.708, 322.311, 174.602, 1.0, 0, 0, 786603, 0xbf800000)
-
+            
                 local propHash = GetHashKey("prop_ld_suitcase_01")
                 RequestModel(propHash)
                 while not HasModelLoaded(propHash) do
                     Citizen.Wait(0)
                 end
-
+            
                 local prop = CreateObject(propHash, 0.0, 0.0, 0.0, true, true, false)
                 local boneIndex = GetPedBoneIndex(finishboss, 60309)
-
+            
                 AttachEntityToEntity(prop, finishboss, boneIndex, 0.3323, 0.0079, 0.0, -5.6272, -82.2274, 135.2101, true, true, false, true, 1, true)
-
+            
                 Citizen.Wait(60000)
                 DeleteEntity(prop)
                 DeleteEntity(finishboss)
                 finishbossSpawned = false
-            end)
+            
+                -- Delete wood
+                if spawnedWood then
+                    DeleteEntity(spawnedWood)
+                end
+            
+                -- Delete guards
+                for _, guardPed in pairs(guardPeds) do
+                    if DoesEntityExist(guardPed) then
+                        DeleteEntity(guardPed)
+                    end
+                end
+                guardPeds = {}
+            
+                -- Delete cars
+                for _, car in pairs(spawnedCars) do
+                    if DoesEntityExist(car) then
+                        DeleteEntity(car)
+                    end
+                end
+                spawnedCars = {}
+            end)         
 
         end, function()
             TriggerEvent('animations:client:EmoteCommandStart', {"c"})
